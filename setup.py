@@ -19,7 +19,7 @@ test_requirements = ['pytest>=3', ]
 setup(
     author="SuryaSankar",
     author_email='suryashankar.m@gmail.com',
-    python_requires='>=3.5',
+    # python_requires='>=3.5',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -43,6 +43,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/suryasankar/otpstore',
-    version='0.1.1',
+    version='0.1.2',
     zip_safe=False,
 )
