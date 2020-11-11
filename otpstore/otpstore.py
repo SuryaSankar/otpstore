@@ -1,5 +1,6 @@
 """Main module."""
 from toolspy import random_string
+import string
 import redis
 import json
 
@@ -9,7 +10,7 @@ class OtpStore(object):
     def __init__(
             self, redis_client=None, redis_host=None,
             prefix="$otp:",
-            otp_length=8, expiry_seconds=300,
+            otp_length=8, otp_charset=None, expiry_seconds=300,
             generation_attempts=3, verification_attempts=2):
         self.initialize(
             redis_client=redis_client,
@@ -17,13 +18,14 @@ class OtpStore(object):
             redis_host=redis_host, otp_length=otp_length,
             expiry_seconds=expiry_seconds,
             generation_attempts=generation_attempts,
-            verification_attempts=verification_attempts
+            verification_attempts=verification_attempts,
+            otp_charset=otp_charset
         )
 
     def initialize(
             self, redis_client=None, redis_host=None,
             prefix="$otp:",
-            otp_length=8, expiry_seconds=300,
+            otp_length=8, otp_charset=None, expiry_seconds=300,
             generation_attempts=3, verification_attempts=2):
         if redis_client:
             self.redis_client = redis_client
@@ -32,6 +34,10 @@ class OtpStore(object):
                 redis_host = "localhost"
             self.redis_client = redis.StrictRedis(host=redis_host)
         self.otp_length = otp_length
+        if otp_charset:
+            self.otp_charset = otp_charset
+        else:
+            self.otp_charset = string.digits + string.ascii_letters
         self.expiry_seconds = expiry_seconds
         self.generation_attempts = generation_attempts
         self.verification_attempts = verification_attempts
@@ -49,14 +55,16 @@ class OtpStore(object):
     def _expire(self, key, expiry_seconds):
         self.redis_client.expire(self._with_prefix(key), expiry_seconds)
 
-    def _generate_otp_string(self, otp_length=None):
+    def _generate_otp_string(self, otp_length=None, otp_charset=None):
         if otp_length is None:
             otp_length = self.otp_length
-        return random_string(otp_length)
+        if otp_charset is None:
+            otp_charset = self.otp_charset
+        return random_string(length=otp_length, candidates=otp_charset)
 
     def _generate_otp_dict(self, otp=None):
         if otp is None:
-            otp = random_string(self.otp_length)
+            otp = self._generate_otp_string()
         return {
             "otps": [otp],
             "verifs_left": self.verification_attempts,
